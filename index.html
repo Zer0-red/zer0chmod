@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>chmod trainer</title>
+<title>zer0chmod</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=VT323&display=swap" rel="stylesheet">
@@ -53,13 +53,19 @@
   h1 .cur{display:inline-block; width:18px; background:var(--green); margin-left:4px;
      box-shadow:0 0 14px rgba(39,255,158,.6); animation:blink 1.1s steps(1) infinite}
   @keyframes blink{50%{opacity:0}}
-  .sub{color:var(--muted); font-size:14px; margin:0 0 26px}
+  .sub{color:var(--muted); font-size:14px; margin:0 0 24px}
   .sub b{color:var(--cyan); font-weight:500}
+  .zero{color:var(--red); text-shadow:0 0 16px rgba(255,107,94,.55)}
+  .by{font-family:var(--mono); font-size:13px; color:var(--muted); margin:0 0 22px; letter-spacing:1px}
 
-  section{opacity:0; transform:translateY(10px); animation:rise .5s ease forwards}
-  section:nth-of-type(1){animation-delay:.05s}
-  section:nth-of-type(2){animation-delay:.18s}
-  @keyframes rise{to{opacity:1;transform:none}}
+  .tabs{display:flex; gap:2px; margin:0 0 22px; border-bottom:1px solid var(--border)}
+  .tab{font-family:var(--mono); font-size:14px; padding:10px 18px; cursor:pointer; background:transparent;
+       color:var(--muted); border:0; border-bottom:2px solid transparent; margin-bottom:-1px; transition:.15s}
+  .tab:hover{color:var(--text)}
+  .tab.active{color:var(--green); border-bottom-color:var(--green)}
+  .tab-panel{display:none}
+  .tab-panel.active{display:block; animation:rise .4s ease}
+  @keyframes rise{from{opacity:0; transform:translateY(8px)} to{opacity:1; transform:none}}
 
   .lbl{display:flex; align-items:center; gap:8px; font-size:12px; letter-spacing:2px;
        text-transform:uppercase; color:var(--dim); margin:0 0 14px}
@@ -93,6 +99,15 @@
   .ty{color:var(--dim)} .gu{color:var(--green)} .gg{color:var(--cyan)} .go{color:var(--amber)}
   .legend{font-size:13px; color:var(--dim); margin:16px 0 0}
   .legend b{color:var(--text); font-weight:500}
+  .ctab{display:flex; flex-direction:column; gap:2px}
+  .crow{display:grid; grid-template-columns:54px 132px 1fr; gap:14px; align-items:center;
+    padding:11px 10px; border:1px solid transparent; border-radius:6px; cursor:pointer; transition:.12s}
+  .crow:hover{background:var(--panel); border-color:var(--border-hi)}
+  .crow .oc{font-family:var(--mono); font-weight:700; font-size:18px}
+  .crow .sy{font-family:var(--mono); font-size:15px; letter-spacing:1px}
+  .crow .ds{font-size:13px; color:var(--muted); line-height:1.55}
+  .crow .ds b{color:var(--text); font-weight:500}
+  @media (max-width:560px){.crow{grid-template-columns:50px 1fr; row-gap:4px}.crow .ds{grid-column:1 / -1}}
 
   .rail{display:flex; gap:6px; flex-wrap:wrap; margin:0 0 16px}
   .srt{font-family:var(--mono); font-size:12px; padding:7px 11px; border-radius:6px; cursor:pointer;
@@ -163,14 +178,27 @@
   <div class="win">
     <div class="titlebar">
       <span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
-      <span class="path">~/learn/<b>chmod-trainer</b></span>
+      <span class="path">~/learn/<b>zer<span class="zero">0</span>chmod</b></span>
     </div>
     <div class="body">
-      <h1>chmod<span class="cur">&nbsp;</span></h1>
+      <h1>zer<span class="zero">0</span>chmod<span class="cur">&nbsp;</span></h1>
+      <p class="by">by zer<span class="zero">0</span>red</p>
       <p class="sub">learn unix permissions &mdash; <b>r=4</b> <b>w=2</b> <b>x=1</b>, summed per group: user / group / others</p>
 
-      <section>
-        <div class="lbl">sandbox &mdash; explore freely</div>
+      <div class="tabs" id="tabs">
+        <button class="tab active" data-tab="learn">learning</button>
+        <button class="tab" data-tab="sandbox">sandbox</button>
+        <button class="tab" data-tab="test">live test</button>
+      </div>
+
+      <div class="tab-panel active" data-panel="learn">
+        <div class="panel">
+          <p class="legend" style="margin:0 0 14px">the handful you'll reach for most of the time &mdash; click any row to load it into the sandbox.</p>
+          <div class="ctab" id="common"></div>
+        </div>
+      </div>
+
+      <div class="tab-panel" data-panel="sandbox">
         <div class="panel">
           <div class="types" id="typeRow">
             <button class="chip sel" data-t="d">directory&nbsp;(d)</button>
@@ -201,10 +229,9 @@
           </div>
           <p class="legend">tip: on a <b>directory</b>, <b>x</b> means "may enter / cd into it", not "execute".</p>
         </div>
-      </section>
+      </div>
 
-      <section>
-        <div class="lbl">curriculum</div>
+      <div class="tab-panel" data-panel="test">
         <div class="panel">
           <div class="rail" id="rail"></div>
           <div id="banner"></div>
@@ -219,7 +246,7 @@
         </div>
         <p class="foot">guess freely &mdash; a wrong answer never breaks your streak, only revealing does.<br>
           <kbd>Enter</kbd> checks, then <kbd>Enter</kbd> again loads the next question.</p>
-      </section>
+      </div>
     </div>
   </div>
 </div>
@@ -268,6 +295,34 @@
     });
   });
   renderSB();
+
+  /* ---------- common permissions ---------- */
+  var COMMON=[
+    ['644','-','<b>Regular files.</b> Owner edits; group and others read-only. The default for most files.'],
+    ['755','d','<b>Directories &amp; programs.</b> Owner full access; others can read and enter or run. Default for directories and executables.'],
+    ['600','-','<b>Private files.</b> Only the owner can read or write &mdash; e.g. SSH private keys and secrets.'],
+    ['700','d','<b>Private directories.</b> Only the owner may enter; fully closed to everyone else &mdash; e.g. ~/.ssh.'],
+    ['664','-','<b>Shared files.</b> Owner and group can edit; others read-only. Good for team-owned files.'],
+    ['775','d','<b>Shared directories.</b> Owner and group can add or remove files; others can read and enter.'],
+    ['640','-','<b>Group-readable.</b> Owner edits, group reads, others get nothing.'],
+    ['444','-','<b>Read-only for all.</b> No one can modify &mdash; handy to lock a file.'],
+    ['777','-','<b>Everyone, everything.</b> Best avoided &mdash; a classic security mistake; prefer 755 or 775.']
+  ];
+  function renderCommon(){
+    var box=document.getElementById('common'); box.innerHTML='';
+    COMMON.forEach(function(e){
+      var s=e[0], ty=e[1], p=permFromOct(s);
+      var row=document.createElement('div'); row.className='crow';
+      row.innerHTML='<span class="oc">'+octSpan(p)+'</span><span class="sy">'+symSpan(p,ty)+'</span><span class="ds">'+e[2]+'</span>';
+      row.addEventListener('click',function(){
+        var np=permFromOct(s); sb.type=ty; sb.u=np.u; sb.g=np.g; sb.o=np.o;
+        document.querySelectorAll('#typeRow .chip').forEach(function(x){x.classList.toggle('sel',x.dataset.t===ty);});
+        switchTab('sandbox'); renderSB();
+        var win=document.querySelector('.win'); if(win&&win.scrollIntoView)win.scrollIntoView({behavior:'smooth',block:'start'});
+      });
+      box.appendChild(row);
+    });
+  }
 
   /* ---------- state ---------- */
   var ST={solved:0,best:0,first:0,total:0,unlocked:1};
@@ -486,7 +541,14 @@
     ask(q);
   }
 
-  renderRail(); renderBar(); stats(); newQ();
+  /* ---------- tabs ---------- */
+  function switchTab(name){
+    document.querySelectorAll('.tab').forEach(function(t){t.classList.toggle('active', t.dataset.tab===name);});
+    document.querySelectorAll('.tab-panel').forEach(function(p){p.classList.toggle('active', p.dataset.panel===name);});
+  }
+  document.querySelectorAll('.tab').forEach(function(t){t.addEventListener('click',function(){switchTab(t.dataset.tab);});});
+
+  renderCommon(); renderRail(); renderBar(); stats(); newQ();
 })();
 </script>
 </body>
