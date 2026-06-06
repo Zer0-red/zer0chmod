@@ -208,6 +208,14 @@
   .termtitle{margin-left:8px; font-family:var(--mono); font-size:12px; color:var(--dim)}
   .termlevel{margin-left:auto; font-family:var(--mono); font-size:10px; letter-spacing:1.5px; padding:2px 8px; border-radius:4px; border:1px solid currentColor}
   .termlevel.easy{color:var(--green)} .termlevel.medium{color:var(--cyan)} .termlevel.realistic{color:var(--amber)} .termlevel.expert{color:var(--red)}
+  .tierpick{display:flex; gap:6px; flex-wrap:wrap; margin-bottom:8px}
+  .tierchip{font-family:var(--mono); font-size:11px; letter-spacing:1px; padding:5px 11px; border-radius:6px; cursor:pointer; background:var(--panel2); color:var(--muted); border:1px solid var(--border); transition:all .12s}
+  .tierchip:hover{border-color:var(--border-hi); color:var(--text)}
+  .tierchip.on{background:transparent; color:currentColor; font-weight:700}
+  .tierchip.easy.on{color:var(--green); border-color:var(--green)}
+  .tierchip.medium.on{color:var(--cyan); border-color:var(--cyan)}
+  .tierchip.realistic.on{color:var(--amber); border-color:var(--amber)}
+  .tierchip.expert.on{color:var(--red); border-color:var(--red)}
   .term{padding:12px 14px; font-family:var(--mono); font-size:13px; line-height:1.65; min-height:150px; max-height:260px; overflow-y:auto; white-space:pre-wrap; word-break:break-word; color:var(--green)}
   .termline{color:var(--green)}
   .termline.dim{color:var(--muted)}
@@ -264,7 +272,6 @@
     <div class="body">
       <h1>chmod<span class="cur">&nbsp;</span></h1>
       <p class="tagline">by Zer0red</p>
-      <p class="sub"><b>r=4</b> <b>w=2</b> <b>x=1</b>, summed per group: user / group / others</p>
 
       <div class="tabs" id="tabs">
         <button class="tab active" data-tab="learn">learn</button>
@@ -398,6 +405,7 @@
         <div class="panel">
           <p class="legend" style="margin:0 0 12px">a sandbox shell &mdash; fix each file's permissions with real <span class="mono">chmod</span> commands. it gets harder as you go: first the number is shown, then hidden, then you get a plain-English task.</p>
           <p class="termtask" id="termGoal"></p>
+          <div class="tierpick" id="tierPick"></div>
           <div class="termwin">
             <div class="termbar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="termtitle">user@linux: ~</span><span class="termlevel" id="termLevel"></span></div>
             <div class="term" id="termOut"></div>
@@ -408,7 +416,8 @@
             <button class="ghost" id="termSol">show solution</button>
             <span class="termcount" id="termCount"></span>
           </div>
-          <p class="foot" style="margin-top:6px">numeric (<span class="mono">chmod 750 file</span>) or symbolic (<span class="mono">chmod u+x file</span>). type <span class="mono">help</span> anytime.</p>
+          <p class="foot" style="margin-top:6px">numeric (<span class="mono">chmod 750 file</span>) or symbolic (<span class="mono">chmod u+x file</span>). The quiz drills one change at a time; the terminal accepts fuller chmod commands. type <span class="mono">help</span> anytime.</p>
+          <div style="text-align:center; margin-top:14px"><button class="ghost" id="termReset">reset all progress</button></div>
         </div>
       </div>
     </div>
@@ -417,7 +426,14 @@
 
 <script>
 (function(){
+  /* =====================================================================
+     SECTIONS:  Perms helpers · Storage · Sandbox · Common · Decoder ·
+                Quiz (generators + ask) · Terminal · Tabs/UI · Init
+     ===================================================================== */
+
+  /* ---------- Perms helpers ---------- */
   var LET={r:'r',w:'w',x:'x'};
+  function esc(s){return String(s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
   function dig(t){return (t.r?4:0)+(t.w?2:0)+(t.x?1:0);}
   function sym(t){return (t.r?'r':'-')+(t.w?'w':'-')+(t.x?'x':'-');}
   function fromDigit(d){return {r:!!(d&4),w:!!(d&2),x:!!(d&1)};}
@@ -485,7 +501,7 @@
     ['664','-','<b>Shared files.</b> Owner and group can edit; others read-only. Good for team-owned files.'],
     ['775','d','<b>Shared directories.</b> Owner and group can add or remove files; others can read and enter.'],
     ['640','-','<b>Group-readable.</b> Owner edits, group reads, others get nothing.'],
-    ['444','-','<b>Read-only for all.</b> No one can modify &mdash; handy to lock a file.'],
+    ['444','-','<b>Read-only for all.</b> No one can modify it through normal write permission (the owner can still chmod it back).'],
     ['777','-','<b>Everyone, everything.</b> Best avoided &mdash; a classic security mistake; prefer 755 or 775.']
   ];
   function renderCommon(){
@@ -565,8 +581,8 @@
   }
 
   /* ---------- state ---------- */
-  var ST={solved:0,best:0,first:0,total:0,unlocked:1,term:0};
-  try{var s=JSON.parse(localStorage.getItem('chmodTrainer')); if(s){ST.solved=s.solved||0;ST.best=s.best||0;ST.first=s.first||0;ST.total=s.total||0;ST.unlocked=s.unlocked||1;ST.term=s.term||0;}}catch(e){}
+  var ST={solved:0,best:0,first:0,total:0,unlocked:1,term:0,termTier:'easy'};
+  try{var s=JSON.parse(localStorage.getItem('chmodTrainer')); if(s){ST.solved=s.solved||0;ST.best=s.best||0;ST.first=s.first||0;ST.total=s.total||0;ST.unlocked=s.unlocked||1;ST.term=s.term||0;ST.termTier=s.termTier||'easy';}}catch(e){}
   function save(){try{localStorage.setItem('chmodTrainer',JSON.stringify(ST));}catch(e){}}
   var streak=0, cur=0, stageCorrect=0;
 
@@ -670,8 +686,8 @@
       options:[['644',1],['600',0],['664',0],['666',0]],
       reveal:'644 (rw-r--r--) &mdash; you read/write, everyone else reads.'},
     {id:'denied', prompt:'You get <span class="mono">Permission denied</span> running <span class="mono">./script.sh</span>. Which command fixes it?',
-      options:[['chmod a+x script.sh',1],['chmod a-x script.sh',0],['chmod 644 script.sh',0],['rm script.sh',0]],
-      reveal:'chmod a+x script.sh adds the execute bit for everyone, so the script can run.'},
+      options:[['chmod u+x script.sh',1],['chmod 644 script.sh',0],['chmod u-x script.sh',0],['rm script.sh',0]],
+      reveal:'chmod u+x script.sh adds the execute bit for the owner (you), so you can run the script. Add execute for everyone only if others actually need to run it.'},
     {id:'safer', prompt:'A web server must READ a config file but never write it. Which is safer?',
       options:[['644',1],['666',0]],
       reveal:'644 &mdash; 666 lets any process (or attacker) write the file. Grant only what is needed.'},
@@ -827,7 +843,7 @@
   }
 
   /* ---------- CLI terminal simulator ---------- */
-  var TASK=null, termErr=0, termDone=false, termHist=[], termHi=0, termSolved=0;
+  var TASK=null, termErr=0, termDone=false, termHist=[], termHi=0, termSolved=0, curTier='easy';
   var PS1='<span class="ps1u">user@linux</span><span class="ps1p">:~$</span>';
   var LSDATE='Jun  5 12:04';
   var TERM_NAMES=['config.php','notes.txt','backup.sh','deploy.sh','secret.key','index.html','data.csv','run.sh'];
@@ -843,7 +859,9 @@
     {text:'Let others read <b>index.html</b> but not change it (owner keeps read &amp; write, group stays as is).', name:'index.html', start:'600', target:'604'},
     {text:'No one but the owner should read <b>id_rsa</b> &mdash; the owner keeps read &amp; write.', name:'id_rsa', start:'604', target:'600'}
   ];
-  function termTier(){ return termSolved<2?'easy':termSolved<4?'medium':termSolved<6?'realistic':'expert'; }
+  function termTier(){ return curTier; }
+  function renderTierPick(){var w=document.getElementById('tierPick'); if(!w)return; var tiers=['easy','medium','realistic','expert']; w.innerHTML=tiers.map(function(t){return '<button class="tierchip '+t+(t===curTier?' on':'')+'" data-tier="'+t+'">'+tierLabel(t)+'</button>';}).join('');}
+  function setTier(t){ curTier=t; if(ST)ST.termTier=t; save(); renderTierPick(); newTermTask(); var inp=document.getElementById('termInput'); if(inp)inp.focus(); }
   function clonePerms(p){return {u:{r:p.u.r,w:p.u.w,x:p.u.x},g:{r:p.g.r,w:p.g.w,x:p.g.x},o:{r:p.o.r,w:p.o.w,x:p.o.x}};}
   function tierLabel(t){ return {easy:'EASY',medium:'MEDIUM',realistic:'REALISTIC',expert:'EXPERT'}[t]; }
   function isColor(){ return termTier()==='easy'; }
@@ -855,9 +873,10 @@
     if(/^[0-7]{3}$/.test(mode)){ ['u','g','o'].forEach(function(k,i){perms[k]=fromDigit(+mode[i]);}); return {ok:true}; }
     var clauses=mode.split(',');
     for(var ci=0;ci<clauses.length;ci++){
-      var m=clauses[ci].trim().match(/^([ugoa]*)([+\-=])([rwxX]*)$/);
+      var m=clauses[ci].trim().match(/^([ugoa]*)([+\-=])([rwx]*)$/);
       if(!m) return {ok:false, err:"chmod: invalid mode: '"+mode+"'"};
-      var who=m[1], op=m[2], pp=m[3].toLowerCase();
+      var who=m[1], op=m[2], pp=m[3];
+      if((op==='+'||op==='-') && pp==='') return {ok:false, err:"chmod: missing permission after '"+op+"'"};
       var classes = (who===''||who.indexOf('a')>-1) ? ['u','g','o'] : who.split('');
       var set={r:pp.indexOf('r')>-1,w:pp.indexOf('w')>-1,x:pp.indexOf('x')>-1};
       classes.forEach(function(k){
@@ -893,7 +912,7 @@
     return false;
   }
   function termRun(line){
-    termPrint(PS1+' '+line.replace(/</g,'&lt;'));
+    termPrint(PS1+' '+esc(line));
     var t=line.trim();
     if(t==='') return;
     termHist.push(t); termHi=termHist.length;
@@ -905,13 +924,14 @@
     if(t==='ls -l'||t==='ls -la'||t==='ll'){TASK.files.forEach(function(f){termPrint(fileLine(f));}); return;}
     if(termDone){return;}
     var parts=t.split(/\s+/);
-    if(parts[0]!=='chmod'){termPrint(parts[0].replace(/</g,'&lt;')+': command not found','err'); termErr++; return;}
+    if(parts[0]!=='chmod'){termPrint(esc(parts[0])+': command not found','err'); termErr++; return;}
     if(parts.length<2){termPrint('chmod: missing operand','err'); termErr++; return;}
-    if(parts.length<3){termPrint("chmod: missing operand after '"+parts[1].replace(/</g,'&lt;')+"'",'err'); termErr++; return;}
+    if(parts.length<3){termPrint("chmod: missing operand after '"+esc(parts[1])+"'",'err'); termErr++; return;}
+    if(parts.length>3){termPrint('chmod: too many operands (this trainer changes one file at a time)','err'); termErr++; return;}
     var f=findFile(parts[2]);
-    if(!f){termPrint("chmod: cannot access '"+parts[2].replace(/</g,'&lt;')+"': No such file or directory",'err'); termErr++; return;}
+    if(!f){termPrint("chmod: cannot access '"+esc(parts[2])+"': No such file or directory",'err'); termErr++; return;}
     var copy=clonePerms(f.perms), res=applyChmod(copy, parts[1]);
-    if(!res.ok){termPrint(res.err,'err'); termErr++; return;}
+    if(!res.ok){termPrint(esc(res.err),'err'); termErr++; return;}
     f.perms=copy;
     termPrint(fileLine(f));
     if(!checkWin() && f.name===TASK.targetName){ termPrint("# not there yet \u2014 keep going (tap 'hint' if you're stuck).",'tip'); }
@@ -919,10 +939,10 @@
   function buildExpert(){
     function mk(files,targetName,targetOct,startOct,text){ shuffle(files); return {files:files,targetName:targetName,targetOct:targetOct,startOct:startOct,text:text,multi:true}; }
     var EX=[
-      function(){var p=shuffle(['notes.txt','data.csv','index.html','report.txt']); return mk([{name:p[0],perms:permFromOct('666')},{name:p[1],perms:permFromOct('644')},{name:p[2],perms:permFromOct('755')}], p[0],'644','666','One file here is writable by <b>everyone</b>. Find it (run <span class="mono">ls -l</span>) and make it writable only by the owner.');},
-      function(){var sh=pick(['deploy.sh','backup.sh','run.sh','start.sh']); var o=shuffle(['notes.txt','data.csv','README.md']); return mk([{name:sh,perms:permFromOct('644')},{name:o[0],perms:permFromOct('644')},{name:o[1],perms:permFromOct('640')}], sh,'755','644','A shell script in this folder can\'t be executed. Find it and make it runnable by everyone.');},
-      function(){var key=pick(['id_rsa','secret.key','server.pem']); var o=shuffle(['config.php','notes.txt','data.csv']); return mk([{name:key,perms:permFromOct('644')},{name:o[0],perms:permFromOct('644')},{name:o[1],perms:permFromOct('755')}], key,'600','644','A private key here is readable by others. Find it and restrict it to the owner only (read &amp; write).');},
-      function(){var f=pick(['team.doc','shared.txt','project.md','budget.csv']); var o=shuffle(['notes.txt','data.csv']); return mk([{name:f,perms:permFromOct('644')},{name:o[0],perms:permFromOct('600')},{name:o[1],perms:permFromOct('755')}], f,'664','644','The team must edit one shared file (only the owner can write it now). Find it and give the group write access.');}
+      function(){var p=shuffle(['notes.txt','data.csv','index.html','report.txt']); return mk([{name:p[0],perms:permFromOct('666')},{name:p[1],perms:permFromOct('644')},{name:p[2],perms:permFromOct('755')}], p[0],'644','666','One file here is writable by <b>everyone</b> &mdash; look for a <span class="mono">w</span> in the <b>others</b> column (the last of the three groups). Find that file and make it writable only by the owner.');},
+      function(){var sh=pick(['deploy.sh','backup.sh','run.sh','start.sh']); var o=shuffle(['notes.txt','data.csv','README.md']); return mk([{name:sh,perms:permFromOct('644')},{name:o[0],perms:permFromOct('644')},{name:o[1],perms:permFromOct('640')}], sh,'755','644','The shell script (the <span class="mono">.sh</span> file) here can\'t be executed. Find it and make it runnable by everyone.');},
+      function(){var key=pick(['id_rsa','secret.key','server.pem']); var o=shuffle(['config.php','notes.txt','data.csv']); return mk([{name:key,perms:permFromOct('644')},{name:o[0],perms:permFromOct('644')},{name:o[1],perms:permFromOct('755')}], key,'600','644','The private key in this folder (<span class="mono">id_rsa</span> / <span class="mono">.key</span> / <span class="mono">.pem</span>) is exposed. Find it and lock it down so only the owner can read &amp; write it.');},
+      function(){var f=pick(['team.doc','shared.txt','project.md','budget.csv']); var o=shuffle(['notes.txt','data.csv']); return mk([{name:f,perms:permFromOct('644')},{name:o[0],perms:permFromOct('600')},{name:o[1],perms:permFromOct('755')}], f,'664','644','The team needs to edit <b>'+f+'</b>, but right now only its owner can write it. Find it and give the <b>group</b> write access (leave others read-only).');}
     ];
     return pick(EX)();
   }
@@ -943,13 +963,11 @@
     }
     termErr=0; termDone=false;
     var out=document.getElementById('termOut'); out.innerHTML='';
-    var intro = tier==='expert' ? "# inspect the directory with 'ls -l', find the right file, then fix it."
-              : tier==='realistic' ? '# read the task above, then type the chmod command that does it.'
-              : tier==='medium' ? "# the number is hidden \u2014 work out the mode, or use symbolic chmod."
-              : "# type a chmod command to reach the goal above ('help' for examples).";
+    var intro = tier==='expert' ? "# new task. run 'ls -l' to inspect the directory, find the right file, then fix it."
+              : tier==='realistic' ? "# new task. run 'ls -l' to see the file, then type the chmod command that does it."
+              : tier==='medium' ? "# new goal. run 'ls -l' to see the file \u2014 the target number is hidden, so work out the mode or use symbolic chmod."
+              : "# new goal. run 'ls -l' to see the file, then chmod it to the target above ('help' for examples).";
     termPrint(intro,'tip');
-    termPrint(PS1+' ls -l');
-    TASK.files.forEach(function(f){termPrint(fileLine(f));});
     updateTermCount();
   }
   function termHintFn(){
@@ -965,7 +983,7 @@
     document.getElementById('termInput').focus();
   }
   function initTerminal(){
-    termSolved = ST.term||0;
+    termSolved = ST.term||0; curTier = ST.termTier||'easy';
     var inp=document.getElementById('termInput'); if(!inp)return;
     inp.addEventListener('keydown',function(e){
       if(e.key==='Enter'){
@@ -976,6 +994,9 @@
     });
     var hb=document.getElementById('termHint'); if(hb)hb.addEventListener('click',termHintFn);
     var sb=document.getElementById('termSol'); if(sb)sb.addEventListener('click',termSolFn);
+    var tp=document.getElementById('tierPick'); if(tp)tp.addEventListener('click',function(e){var b=e.target.closest('.tierchip'); if(b)setTier(b.dataset.tier);});
+    var tr=document.getElementById('termReset'); if(tr)tr.addEventListener('click',resetAll);
+    renderTierPick();
     newTermTask();
   }
 
@@ -998,12 +1019,13 @@
   var decStart=document.getElementById('decStart');
   if(decStart)decStart.addEventListener('click',function(){switchTab('test'); var w=document.querySelector('.win'); if(w&&w.scrollIntoView)w.scrollIntoView({behavior:'smooth',block:'start'});});
 
-  var resetB=document.getElementById('resetBtn');
-  if(resetB)resetB.addEventListener('click',function(){
+  function resetAll(){
     if(!confirm('Reset all progress? This clears your solved count, streaks, unlocked stages, and the terminal.'))return;
-    ST={solved:0,best:0,first:0,total:0,unlocked:1,term:0}; streak=0; cur=0; stageCorrect=0; recent=[]; termSolved=0; termHist=[]; termHi=0;
-    save(); banner(''); renderRail(); renderBar(); stats(); newQ(); newTermTask();
-  });
+    ST={solved:0,best:0,first:0,total:0,unlocked:1,term:0,termTier:'easy'}; streak=0; cur=0; stageCorrect=0; recent=[]; termSolved=0; termHist=[]; termHi=0; curTier='easy';
+    save(); banner(''); renderRail(); renderBar(); stats(); newQ(); renderTierPick(); newTermTask();
+  }
+  var resetB=document.getElementById('resetBtn');
+  if(resetB)resetB.addEventListener('click',resetAll);
 
   parseInto(DEC_EX[1]); decFocus='octal';
   renderDecoder(); renderCommon(); renderRail(); renderBar(); stats(); newQ(); initTerminal();
