@@ -101,6 +101,10 @@
   .big{font-family:var(--mono); font-weight:700; font-size:30px; letter-spacing:2px}
   .ty{color:var(--dim)} .gu{color:var(--green)} .gg{color:var(--cyan)} .go{color:var(--amber)}
   .legend{font-size:13px; color:var(--dim); margin:16px 0 0}
+  .rwx{display:flex; flex-direction:column; gap:10px}
+  .rwxitem{display:flex; align-items:center; gap:14px; background:var(--panel2); border:1px solid var(--border); border-radius:10px; padding:12px 14px; font-size:14px}
+  .rwxk{flex:0 0 auto; width:38px; height:38px; display:flex; align-items:center; justify-content:center; font-family:var(--mono); font-size:20px; font-weight:700; color:var(--green); border:1px solid var(--green); border-radius:8px}
+  .rwxn{flex:0 0 auto; font-family:var(--mono); font-size:15px; font-weight:700; color:var(--amber); min-width:28px}
   .legend b{color:var(--text); font-weight:500}
   .ctab{display:flex; flex-direction:column; gap:2px}
   .crow{display:grid; grid-template-columns:54px 132px 1fr; gap:14px; align-items:center;
@@ -282,6 +286,27 @@
 
       <div class="tab-panel active" data-panel="learn">
         <div class="panel">
+          <div class="lbl">start here: the three letters</div>
+          <p class="legend" style="margin:0 0 12px">linux permissions are built from just three letters. a dash <span class="mono">-</span> in a slot means that permission is switched <b>off</b>.</p>
+          <div class="rwx">
+            <div class="rwxitem"><span class="rwxk">r</span><span class="rwxn">= 4</span><div><b>read</b> &mdash; view a file's contents (or list what's inside a folder)</div></div>
+            <div class="rwxitem"><span class="rwxk">w</span><span class="rwxn">= 2</span><div><b>write</b> &mdash; change or delete a file (or add/remove files in a folder)</div></div>
+            <div class="rwxitem"><span class="rwxk">x</span><span class="rwxn">= 1</span><div><b>execute</b> &mdash; run a file as a program (or enter/cd into a folder)</div></div>
+          </div>
+          <p class="legend" style="margin:12px 0 0">add up the values in each group to get its digit (e.g. <span class="mono">rw-</span> = 4+2 = <b>6</b>). these three letters repeat three times &mdash; once for the <b>owner</b>, once for the <b>group</b>, once for <b>others</b>.</p>
+        </div>
+        <div class="panel">
+          <div class="lbl">the formula</div>
+          <p class="legend" style="margin:0 0 14px">each group of three letters adds up to one digit. three groups &rarr; a three-digit number.</p>
+          <div class="formula-card">
+            <div>rwx = 4+2+1 = <b>7</b></div>
+            <div>rw- = 4+2&nbsp;&nbsp;&nbsp; = <b>6</b></div>
+            <div>r-x = 4&nbsp;&nbsp;&nbsp;+1 = <b>5</b></div>
+            <div>r-- = 4&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; = <b>4</b></div>
+            <div style="margin-top:14px; color:var(--text)">so <span class="mono">rwxr-xr-x</span> &rarr; 7&nbsp;5&nbsp;5 &rarr; <b>755</b></div>
+          </div>
+        </div>
+        <div class="panel">
           <div class="lbl">decode the permission string</div>
           <p class="legend" style="margin:0 0 14px">this is what <span class="mono">ls -l</span> shows. tap any letter to flip it, or walk through it step by step.</p>
           <div class="declabel">load an example:</div>
@@ -295,27 +320,6 @@
             <button class="ghost" id="dxAll" style="display:none">show all</button>
           </div>
           <div style="text-align:center; margin-top:18px"><button class="act" id="decStart">got it &mdash; start quiz &rsaquo;</button></div>
-        </div>
-        <div class="panel">
-          <div class="lbl">file vs directory</div>
-          <p class="legend" style="margin:0 0 14px">the same letters mean different things depending on what they're attached to &mdash; this trips up almost everyone.</p>
-          <div class="fvd">
-            <div class="fvdh"></div><div class="fvdh">on a file</div><div class="fvdh">on a directory</div>
-            <div class="fvdk">r</div><div>read the file's contents</div><div>list the names inside it</div>
-            <div class="fvdk">w</div><div>modify the file's contents</div><div>create, delete, or rename entries</div>
-            <div class="fvdk">x</div><div>run it as a program</div><div>enter it / cd in / access paths inside</div>
-          </div>
-          <div class="callout info" style="margin-top:14px">On directories, <b>x</b> is the important one: <b>r</b> only lets you list names, <b>x</b> lets you actually enter and reach paths inside, and <b>w</b> needs <b>x</b> to be useful (creating or deleting an entry means entering the directory first). So <b>r</b> without <b>x</b> on a folder is rarely what you want.</div>
-        </div>
-        <div class="panel">
-          <div class="lbl">the formula</div>
-          <div class="formula-card">
-            <div>r = 4 &nbsp;&nbsp;&nbsp; w = 2 &nbsp;&nbsp;&nbsp; x = 1 &nbsp;&nbsp;&mdash;&nbsp; add the ones that are set</div>
-            <div style="margin-top:12px">rwx = 4 + 2 + 1 = <b>7</b></div>
-            <div>rw- = 4 + 2 &nbsp;&nbsp;&nbsp;&nbsp; = <b>6</b></div>
-            <div>r-x = 4 &nbsp;&nbsp;&nbsp;&nbsp; + 1 = <b>5</b></div>
-            <div>r-- = 4 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; = <b>4</b></div>
-          </div>
         </div>
         <div class="panel">
           <div class="lbl">common permissions</div>
@@ -595,7 +599,7 @@
 
   /* ---------- generators ---------- */
   function genTriad(diff){
-    var pool=diff?[0,1,2,3,4,5,6,7]:[7,5,4,6,0], d=pick(pool), t=fromDigit(d);
+    var pool=diff?[1,2,3,4,5,6,7]:[7,5,4,6,1], d=pick(pool), t=fromDigit(d);
     return {kind:'text', key:'t'+d, attrs:{maxlength:1,inputmode:'numeric',placeholder:'0-7'},
       prompt:'<p class="qprompt"><span class="arrow">level 1 &rarr;</span> what octal digit is this single permission group?</p><div class="qbig"><span class="gu">'+sym(t)+'</span></div>',
       ok:function(v){return v.trim()===String(d);},
@@ -848,8 +852,8 @@
   var LSDATE='Jun  5 12:04';
   var TERM_NAMES=['config.php','notes.txt','backup.sh','deploy.sh','secret.key','index.html','data.csv','run.sh'];
   var TERM_SCENARIOS=[
-    {text:'The owner wants to run <b>deploy.sh</b> &mdash; give the owner execute permission.', name:'deploy.sh', start:'644', target:'744'},
-    {text:'Make <b>backup.sh</b> executable by everyone.', name:'backup.sh', start:'644', target:'755'},
+    {text:'The owner wants to run <b>deploy.sh</b> &mdash; add execute permission for the owner only (leave group &amp; others as they are).', name:'deploy.sh', start:'644', target:'744'},
+    {text:'Add <b>execute</b> permission to <b>backup.sh</b> for everyone (leave its read access as it is).', name:'backup.sh', start:'644', target:'755'},
     {text:"Others shouldn't be able to read <b>notes.txt</b> &mdash; keep the owner's read &amp; write, and the group's read.", name:'notes.txt', start:'644', target:'640'},
     {text:'Lock down <b>secret.key</b>: only the owner may read &amp; write, nobody else gets anything.', name:'secret.key', start:'644', target:'600'},
     {text:'Let the group edit <b>report.txt</b> &mdash; add write for the group (others stay read-only).', name:'report.txt', start:'644', target:'664'},
@@ -865,8 +869,8 @@
   function clonePerms(p){return {u:{r:p.u.r,w:p.u.w,x:p.u.x},g:{r:p.g.r,w:p.g.w,x:p.g.x},o:{r:p.o.r,w:p.o.w,x:p.o.x}};}
   function tierLabel(t){ return {easy:'EASY',medium:'MEDIUM',realistic:'REALISTIC',expert:'EXPERT'}[t]; }
   function isColor(){ return termTier()==='easy'; }
-  function symFull(p,color){ if(color) return '<span class="ty">-</span><span class="gu">'+sym(p.u)+'</span><span class="gg">'+sym(p.g)+'</span><span class="go">'+sym(p.o)+'</span>'; return '-'+sym(p.u)+sym(p.g)+sym(p.o); }
-  function fileLine(f){ return symFull(f.perms,isColor())+' 1 user user 0 '+LSDATE+' '+f.name; }
+  function symFull(p,color,type){ var t=type||'-'; if(color) return '<span class="ty">'+t+'</span><span class="gu">'+sym(p.u)+'</span><span class="gg">'+sym(p.g)+'</span><span class="go">'+sym(p.o)+'</span>'; return t+sym(p.u)+sym(p.g)+sym(p.o); }
+  function fileLine(f){ var dir=f.type==='d'; return symFull(f.perms,isColor(),f.type)+' '+(dir?'2':'1')+' '+(f.owner||'user')+' '+(f.group||'user')+' '+(dir?'4096':(f.size!=null?f.size:'0'))+' '+LSDATE+' '+f.name; }
   function findFile(n){ for(var i=0;i<TASK.files.length;i++) if(TASK.files[i].name===n) return TASK.files[i]; return null; }
   function targetFile(){ return findFile(TASK.targetName); }
   function applyChmod(perms, mode){
@@ -903,7 +907,7 @@
     var f=targetFile();
     if(f && octStr(f.perms)===TASK.targetOct){
       termDone=true; termSolved++; ST.term=termSolved; save(); updateTermCount();
-      termPrint('\u2713 done \u2014 '+f.name+' is now '+symFull(f.perms,isColor())+' ('+TASK.targetOct+'). press <b>Enter</b> for the next one.','ok');
+      termPrint('\u2713 done \u2014 '+f.name+' is now '+symFull(f.perms,isColor(),f.type)+' ('+TASK.targetOct+'). press <b>Enter</b> for the next one.','ok');
       var rs=relSym(TASK.startOct,TASK.targetOct);
       if(rs && rs.indexOf(',')===-1) termPrint('# a pro would usually write <span class="mono">chmod '+rs+' '+f.name+'</span> for a tweak like this (numeric <span class="mono">chmod '+TASK.targetOct+' '+f.name+'</span> works too).','tip');
       else termPrint('# for a full mode like this, numeric is the clean way: <span class="mono">chmod '+TASK.targetOct+' '+f.name+'</span>.','tip');
@@ -936,28 +940,59 @@
     termPrint(fileLine(f));
     if(!checkWin() && f.name===TASK.targetName){ termPrint("# not there yet \u2014 keep going (tap 'hint' if you're stuck).",'tip'); }
   }
+  var EX_FILES=['notes.txt','data.csv','index.html','report.txt','README.md','app.log','styles.css','todo.md','cache.dat','archive.zip'];
+  var EX_DIRS=['logs','backups','src','config','public','assets','docs','tmp','vendor','uploads'];
+  var EX_USERS=['root','www-data','deploy','admin','user','postgres','jenkins'];
+  var EX_GROUPS=['staff','www-data','developers','admin','users','team','web'];
+  var EX_FILEPERMS=['644','755','640','600','700','664','750','711','444'];
+  var EX_DIRPERMS=['755','750','700','775'];
+  function rint(a,b){ return a+Math.floor(Math.random()*(b-a+1)); }
   function buildExpert(){
-    function mk(files,targetName,targetOct,startOct,text){ shuffle(files); return {files:files,targetName:targetName,targetOct:targetOct,startOct:startOct,text:text,multi:true}; }
-    var EX=[
-      function(){var p=shuffle(['notes.txt','data.csv','index.html','report.txt']); return mk([{name:p[0],perms:permFromOct('666')},{name:p[1],perms:permFromOct('644')},{name:p[2],perms:permFromOct('755')}], p[0],'644','666','One file here is writable by <b>everyone</b> &mdash; look for a <span class="mono">w</span> in the <b>others</b> column (the last of the three groups). Find that file and make it writable only by the owner.');},
-      function(){var sh=pick(['deploy.sh','backup.sh','run.sh','start.sh']); var o=shuffle(['notes.txt','data.csv','README.md']); return mk([{name:sh,perms:permFromOct('644')},{name:o[0],perms:permFromOct('644')},{name:o[1],perms:permFromOct('640')}], sh,'755','644','The shell script (the <span class="mono">.sh</span> file) here can\'t be executed. Find it and make it runnable by everyone.');},
-      function(){var key=pick(['id_rsa','secret.key','server.pem']); var o=shuffle(['config.php','notes.txt','data.csv']); return mk([{name:key,perms:permFromOct('644')},{name:o[0],perms:permFromOct('644')},{name:o[1],perms:permFromOct('755')}], key,'600','644','The private key in this folder (<span class="mono">id_rsa</span> / <span class="mono">.key</span> / <span class="mono">.pem</span>) is exposed. Find it and lock it down so only the owner can read &amp; write it.');},
-      function(){var f=pick(['team.doc','shared.txt','project.md','budget.csv']); var o=shuffle(['notes.txt','data.csv']); return mk([{name:f,perms:permFromOct('644')},{name:o[0],perms:permFromOct('600')},{name:o[1],perms:permFromOct('755')}], f,'664','644','The team needs to edit <b>'+f+'</b>, but right now only its owner can write it. Find it and give the <b>group</b> write access (leave others read-only).');}
+    function entry(name,oct,type,owner,group){ return {name:name,perms:permFromOct(oct),type:type,owner:owner,group:group,size:type==='d'?'4096':String(pick(['0','48','512','1024','2310','8192'])) }; }
+    function build(spec){
+      var used=[spec.targetName];
+      var files=[entry(spec.targetName, spec.startOct, '-', 'user', spec.targetGroup||pick(EX_GROUPS))];
+      var n=rint(1,3); // total 2-4 entries
+      for(var i=0;i<n;i++){
+        var nm, oct, type, tries=0;
+        do{
+          if(Math.random()<0.4){ type='d'; nm=pick(EX_DIRS); oct=pick(EX_DIRPERMS); }
+          else { type='-'; nm=pick(EX_FILES); oct=pick(EX_FILEPERMS); }
+          tries++;
+        }while(tries<40 && (used.indexOf(nm)>-1 || (spec.okName&&!spec.okName(nm)) || (spec.okPerms&&!spec.okPerms(permFromOct(oct)))));
+        if(tries>=40) continue;
+        used.push(nm);
+        files.push(entry(nm,oct,type,pick(EX_USERS),pick(EX_GROUPS)));
+      }
+      shuffle(files);
+      return {kind:spec.kind, files:files, targetName:spec.targetName, targetOct:spec.targetOct, startOct:spec.startOct, text:spec.text, multi:true};
+    }
+    var TPL=[
+      function(){ return build({kind:'ww', targetName:pick(['notes.txt','data.csv','report.txt','app.log']), targetOct:'644', startOct:'666', text:'One file here is writable by <b>everyone</b>. Find it and make it writable only by the owner &mdash; leave everyone\'s <b>read</b> access as it is.', okPerms:function(p){return !p.o.w;}}); },
+      function(){ var sh=pick(['deploy.sh','backup.sh','run.sh','start.sh']); return build({kind:'script', targetName:sh, targetOct:'755', startOct:'644', text:'A shell script here can\'t be executed. Find it and <b>add execute</b> permission for everyone (leave its read access as it is).', okName:function(n){return !/\.sh$/.test(n);}}); },
+      function(){ var key=pick(['id_rsa','secret.key','server.pem']); return build({kind:'key', targetName:key, targetOct:'600', startOct:'644', text:'A private key in this folder is exposed. Find it and lock it down so only the owner can read &amp; write it.', okName:function(n){return !/(^id_rsa$|\.key$|\.pem$)/.test(n);}}); },
+      function(){ var f=pick(['team.doc','shared.txt','project.md','budget.csv']); return build({kind:'shared', targetName:f, targetOct:'664', startOct:'644', targetGroup:pick(['developers','team','staff']), text:'The team needs to edit <b>'+f+'</b>, but right now only its owner can write it. Give the <b>group</b> write access (leave others read-only).'}); }
     ];
-    return pick(EX)();
+    return pick(TPL)();
   }
+  var termRecent=[];
+  function genTermTask(tier){
+    if(tier==='expert') return buildExpert();
+    if(tier==='realistic'){ var sc=pick(TERM_SCENARIOS); return {kind:'sc-'+sc.name, files:[{name:sc.name,perms:permFromOct(sc.start)}], targetName:sc.name, targetOct:sc.target, startOct:sc.start, text:sc.text}; }
+    var name=pick(TERM_NAMES), so=pick(EASY), to; do{to=pick(EASY);}while(to===so);
+    return {kind:name+'-'+to, files:[{name:name,perms:permFromOct(so)}], targetName:name, targetOct:to, startOct:so};
+  }
+  function taskSig(t){ return curTier+'|'+t.kind; }
   function newTermTask(){
     var tier=termTier(), goal=document.getElementById('termGoal');
-    if(tier==='expert'){
-      TASK=buildExpert();
+    var task, tries=0;
+    do{ task=genTermTask(tier); tries++; }while(termRecent.indexOf(taskSig(task))>-1 && tries<30);
+    termRecent.push(taskSig(task)); if(termRecent.length>3) termRecent.shift();
+    TASK=task;
+    if(tier==='expert'||tier==='realistic'){
       goal.innerHTML='<span class="goalk">task</span> '+TASK.text;
-    } else if(tier==='realistic'){
-      var sc=pick(TERM_SCENARIOS);
-      TASK={files:[{name:sc.name,perms:permFromOct(sc.start)}], targetName:sc.name, targetOct:sc.target, startOct:sc.start, text:sc.text};
-      goal.innerHTML='<span class="goalk">task</span> '+sc.text;
     } else {
-      var name=pick(TERM_NAMES), so=pick(EASY), to; do{to=pick(EASY);}while(to===so);
-      TASK={files:[{name:name,perms:permFromOct(so)}], targetName:name, targetOct:to, startOct:so};
+      var to=TASK.targetOct, name=TASK.targetName;
       if(tier==='medium') goal.innerHTML='<span class="goalk">goal</span> set <b>'+name+'</b> to <span class="mono">'+symFull(permFromOct(to),isColor())+'</span>';
       else goal.innerHTML='<span class="goalk">goal</span> set <b>'+name+'</b> to <span class="mono">'+symFull(permFromOct(to),isColor())+'</span> &nbsp;(<b>'+to+'</b>)';
     }
@@ -965,9 +1000,10 @@
     var out=document.getElementById('termOut'); out.innerHTML='';
     var intro = tier==='expert' ? "# new task. run 'ls -l' to inspect the directory, find the right file, then fix it."
               : tier==='realistic' ? "# new task. run 'ls -l' to see the file, then type the chmod command that does it."
-              : tier==='medium' ? "# new goal. run 'ls -l' to see the file \u2014 the target number is hidden, so work out the mode or use symbolic chmod."
-              : "# new goal. run 'ls -l' to see the file, then chmod it to the target above ('help' for examples).";
+              : tier==='medium' ? "# new goal. the target number is hidden \u2014 work out the mode, or use symbolic chmod."
+              : "# new goal. chmod the file to the target above ('help' for examples).";
     termPrint(intro,'tip');
+    if(tier==='easy'||tier==='medium'){ termPrint(PS1+' ls -l'); TASK.files.forEach(function(f){termPrint(fileLine(f));}); }
     updateTermCount();
   }
   function termHintFn(){
@@ -1021,7 +1057,7 @@
 
   function resetAll(){
     if(!confirm('Reset all progress? This clears your solved count, streaks, unlocked stages, and the terminal.'))return;
-    ST={solved:0,best:0,first:0,total:0,unlocked:1,term:0,termTier:'easy'}; streak=0; cur=0; stageCorrect=0; recent=[]; termSolved=0; termHist=[]; termHi=0; curTier='easy';
+    ST={solved:0,best:0,first:0,total:0,unlocked:1,term:0,termTier:'easy'}; streak=0; cur=0; stageCorrect=0; recent=[]; termSolved=0; termHist=[]; termHi=0; curTier='easy'; termRecent=[];
     save(); banner(''); renderRail(); renderBar(); stats(); newQ(); renderTierPick(); newTermTask();
   }
   var resetB=document.getElementById('resetBtn');
